@@ -1,0 +1,5 @@
+html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
+#map { height: 400px; width: 100%; }
+#maincontent { height: 100%; width: 100%; margin: 10}
+#mapcolumn {min-height: 500px}
+/*# sourceMappingURL=app.css.map */
