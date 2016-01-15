@@ -19,6 +19,9 @@ elixir(function(mix) {
     mix.styles
         ([
 
+            'libs/jquery-ui.css',
+            'libs/jquery-ui.structure.css',
+            'libs/jquery-ui.theme.css',
             'libs/bootstrap.min.css',
             'app.css'
 
@@ -28,6 +31,7 @@ elixir(function(mix) {
     mix.scripts
         ([
             'libs/jquery.min.js',
+            'libs/jquery-ui.min.js',
             'libs/bootstrap.min.js',
             'libs/html5.shiv.js',
             'libs/respond.min.js',

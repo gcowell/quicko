@@ -2,20 +2,15 @@
 
 @section('content')
 
-@foreach ($matches as $journey)
+@include('partials.matchbar')
 
-<div class = "body">
-    <h3>Journey #{{ $journey->id }}</h3>
-    <ul>
-        <li>Pickup at: {{$journey->startaddress}}</li>
-        <li>Dropoff at: {{$journey->endaddress}}</li>
-        <li>{{$journey->startdistance}} miles from your pick-up point</li>
-        <li>{{$journey->enddistance}} miles from your drop-off point</li>
-       
-    </ul>
+<div id="map">
 </div>
 
-@endforeach
+<div id="itemlist">
+</div>
+
+
 
 @stop
 

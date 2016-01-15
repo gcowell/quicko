@@ -16,7 +16,7 @@
 
 </div>
 
-<div class="col-md-4" id="mapcolumn">
+<div class="col-md-6" id="mapcolumn">
 
     <div id="map">
     </div>

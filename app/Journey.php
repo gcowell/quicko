@@ -33,18 +33,21 @@ class Journey extends Model
 
     public function findMatchingJourneys (Parcel $parcel, $range)
     {
-        $parcel_unpacked = $parcel->unpackPoints($parcel->id);
 
-        $start_lat = $parcel_unpacked->start_x;
-        $start_lng = $parcel_unpacked->start_y;
+        if($range == 'default')
+        {
+            $range = 10;
+        }
 
-        $end_lat = $parcel_unpacked->end_x;
-        $end_lng = $parcel_unpacked->end_y;
+        $start_lat = $parcel->start_lat;
+        $start_lng = $parcel->start_lng;
+        $end_lat = $parcel->end_lat;
+        $end_lng = $parcel->end_lng;
 
         $user_id = Auth::id();
 
-        $query_string = "*,ST_X(startpoint) AS start_x, ST_Y(startpoint) AS start_y ,ST_X(endpoint) AS end_x, ST_Y(endpoint) AS end_y,(3959*acos(cos(radians(?))*cos(radians(ST_X(startpoint)))*cos(radians(ST_Y(startpoint))-radians(?))+sin(radians(?))*sin(radians(ST_X(startpoint))))) AS startdistance, (3959*acos(cos(radians(?))*cos(radians(ST_X(endpoint)))*cos(radians(ST_Y(endpoint))-radians(?))+sin(radians(?))*sin(radians(ST_X(endpoint))))) AS enddistance";
-
+        $query_string = "id, user_id, startaddress, endaddress, ST_X(startpoint) AS start_lat, ST_Y(startpoint) AS start_lng ,ST_X(endpoint) AS end_lat, ST_Y(endpoint) AS end_lng,(3959*acos(cos(radians(?))*cos(radians(ST_X(startpoint)))*cos(radians(ST_Y(startpoint))-radians(?))+sin(radians(?))*sin(radians(ST_X(startpoint))))) AS startdistance, (3959*acos(cos(radians(?))*cos(radians(ST_X(endpoint)))*cos(radians(ST_Y(endpoint))-radians(?))+sin(radians(?))*sin(radians(ST_X(endpoint))))) AS enddistance";
+        //TODO factor out miles
 
           $journeys = $this->selectRaw($query_string, array($start_lat, $start_lng, $start_lat, $end_lat, $end_lng, $end_lat,))
             ->where('user_id', '!=', $user_id)

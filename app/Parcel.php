@@ -23,7 +23,6 @@ class Parcel extends Model
 
 
 
-
     //Find owner of Parcel
     public function owner()
     {
@@ -36,21 +35,37 @@ class Parcel extends Model
     //Take binary object points from database and convert into accessible form
     public function unpackPoints($id)
     {
+        //TODO CHECK IF WE NEED TO STORE THE POINTS AS GEOMETRY - COULD JUST STORE AS POINTS
         $parcel = Auth::user()->parcels()->findOrFail($id);
         $parcel_unpacked = $parcel->select
             (
                 DB::raw
                     (
-                        'ST_X(startpoint) AS start_x,
-                        ST_Y(startpoint) AS start_y,
-                        ST_X(endpoint) AS end_x,
-                        ST_Y(endpoint) AS end_y'
+                        'id,
+                        user_id,
+                        startaddress,
+                        endaddress,
+                        ST_X(startpoint) AS start_lat,
+                        ST_Y(startpoint) AS start_lng,
+                        ST_X(endpoint) AS end_lat,
+                        ST_Y(endpoint) AS end_lng'
                     )
             )->first();
+
 
         return $parcel_unpacked;
 
     }
+
+
+    public function createSpatialGeometry($point)
+    {
+        $geom = DB::raw("GeomFromText('POINT($point)')");
+
+        return $geom;
+    }
+
+
 
 
 }

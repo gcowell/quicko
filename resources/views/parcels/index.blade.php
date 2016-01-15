@@ -15,7 +15,7 @@
         <li>Pickup at: {{$parcel->startaddress}}</li>
         <li>Dropoff at: {{$parcel->endaddress}}</li>
         <li>Contents: {{$parcel->contents}}</li>
-        <li><a href="{{ url('/parcels/' . $parcel->id . '/' . '10') }}">Find a Route for Parcel #{{ $parcel->id }}</a></li>
+        <li><a href="{{ url('/parcels/' . $parcel->id . '/' . 'default') }}">Find a Route for Parcel #{{ $parcel->id }}</a></li>
     </ul>
 </div>
 

@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Journey;
 use App\Parcel;
 use App\Http\Requests;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateParcel;
 use Auth;
 use DB;
+Use Response;
+
 
 
 class ParcelsController extends Controller
@@ -61,27 +64,38 @@ class ParcelsController extends Controller
 
         $parcel = new Parcel($request->except('startpoint', 'endpoint'));
 
-        //TODO move to parcel model
-        $parcel->startpoint = DB::raw("GeomFromText('POINT($request->startpoint)')");
-        $parcel->endpoint = DB::raw("GeomFromText('POINT($request->endpoint)')");
-        //TODO move to parcel model
+        $parcel->startpoint = $parcel->createSpatialGeometry($request->startpoint);
+        $parcel->endpoint = $parcel->createSpatialGeometry($request->endpoint);
 
         Auth::user()->parcels()->save($parcel);
-
 
         return redirect ('parcels');
     }
 
 
+
+
+
+
     //Find journeys near parcel locations
-    public function matchToJourney($id, $range)
+    public function matchToJourney(Request $request, $id, $range)
     {
-        $parcel = Auth::user()->parcels()->findOrFail($id);
-        $journey = new Journey();
-        $matches = $journey->findMatchingJourneys($parcel, $range);
 
+        if($request->ajax())
+        {
+            $parcel = Auth::user()->parcels()->findOrFail($id);
+            $parcel = $parcel->unpackPoints($parcel->id);
+            $journey = new Journey();
+            $matches = $journey->findMatchingJourneys($parcel, $range);
 
-        return view ('parcels.match')->with('matches', $matches);
+            $results = ['parcel' => $parcel, 'matches' => $matches];
+
+            return ($results);
+        }
+        else
+        {
+            return view ('parcels.match');
+        }
 
     }
 
