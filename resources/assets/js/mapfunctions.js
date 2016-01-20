@@ -2,6 +2,8 @@
 OBJECT CLASSES
  **********************************************************************************************************/
 
+//TODO - BIG TASK - REMAIN CONSISTENT BETWEEN RESULT AND MATCH - MATCH IS BETTER
+
 /**
  * MAPOBJECT CLASS.
  *
@@ -22,9 +24,9 @@ function MapObject()
     this.addressURLArray = [];
     this.locationsArray = {};
     this.markersArray = [];
-    this.matchesArray = [];
-
     this.mapBounds = null;
+
+    this.openInfoWindow = null;
 
     $(window).bind('gMapsLoaded', this.LoadGoogleMap);
 
@@ -297,20 +299,20 @@ MapObject.prototype.getResults = function (range)
                 function plotData(data)
                 {
                     {
+                        //CLEAR ANY EXISTING PLOTTED MARKERS
+                        this.clearOverlays.call(this, null);
+                        this.mapBounds = new google.maps.LatLngBounds();
 
-                        //DEAL WITH PARCEL
+                        //PLOT PARCEL MARKERS
                         var parcel_start_lat = data.parcel.start_lat;
                         var parcel_start_lng = data.parcel.start_lng;
-
                         var parcel_end_lat = data.parcel.end_lat;
                         var parcel_end_lng = data.parcel.end_lng;
-
-                        this.clearOverlays.call(this, null);
 
                         this.plotCircle.call(this, parcel_start_lat, parcel_start_lng, range);
                         this.plotCircle.call(this, parcel_end_lat, parcel_end_lng, range);
 
-                        //DEAL WITH JOURNEYS
+                        //PLOT JOURNEY RESULTS MARKER
                         var resultsArray = data.matches;
 
                         for (var i = 0; i < resultsArray.length; i++)
@@ -319,9 +321,13 @@ MapObject.prototype.getResults = function (range)
                             this.plotResultMarkers.call(this, match);
                         }
 
+                        //RESET ZOOM / POSITION BASED ON NEW MARKERS
+                        map.setCenter(this.mapBounds.getCenter());
+                        map.fitBounds(this.mapBounds);
                         map.setZoom(map.getZoom()-1);
 
-                        this.matchesArray.push(match);
+                        //PRINT RESULTS IN HTML
+                        this.listResults.call(this, resultsArray);
 
                     }
                 }
@@ -340,23 +346,22 @@ MapObject.prototype.plotResultMarkers = function (match)
 {
 
 
-
-    //TODO push markers into the match object, then push each match object into the match Array
-
+    //GET DATA OF MATCH
     var start_latlng = new google.maps.LatLng( match.start_lat, match.start_lng);
     var end_latlng = new google.maps.LatLng( match.end_lat, match.end_lng);
     var match_id = match.id;
 
-
+    //PLOT START AND END MARKERS
     var start_marker = new google.maps.Marker
-    (
-        {
-            position: start_latlng,
-            map: map,
-            icon: '/img/journey_icon.png',
-            id: match_id
-        }
+(
+    {
+        position: start_latlng,
+        map: map,
+        icon: '/img/journey_icon.png',
+        id: match_id
+    }
     );
+
 
     var end_marker = new google.maps.Marker
     (
@@ -369,6 +374,7 @@ MapObject.prototype.plotResultMarkers = function (match)
     );
 
 
+    //LINK MARKERS WITH ROUTE LINE
     var route = new google.maps.Polyline
     (
         {
@@ -382,15 +388,95 @@ MapObject.prototype.plotResultMarkers = function (match)
         }
     );
 
+
+    //GENERATE CONTENTS OF INFOWINDOW
+
+    var info_div = document.createElement('div');
+    info_div.id = 'infowindowcontent';
+
+    var user = document.createElement('h3');
+    var user_link = document.createElement('a');
+    user_link.href = "http://quicko/users/"+match.owner.id;
+    user_link.text=  match.owner.name;
+    user.appendChild(user_link);
+
+    var content = document.createElement('p');
+    var start_statement = Math.round(match.startdistance * 100) / 100 + ' miles from your starting point';
+    var end_statement =  Math.round(match.enddistance * 100) / 100 + ' miles from your end point';
+
+    var contentString = "<br />" + start_statement + "<br />" + end_statement;
+    content.innerHTML = contentString;
+
+    info_div.appendChild(user);
+    info_div.appendChild(content);
+
+
+
+    var infowindow = new google.maps.InfoWindow
+    (
+        {
+            content: info_div
+        }
+    );
+
+
+    //TODO DRY UP THESE THREE STATEMENTS
+    end_marker.addListener
+    (
+        'click', $.proxy
+        (function()
+            {
+
+                if (this.openinfowindow)
+                {
+                    this.openinfowindow.close();
+                }
+                infowindow.open(map, end_marker);
+                this.openinfowindow = infowindow;
+
+            },this
+        )
+    );
+
+    route.addListener
+        (
+            'click', $.proxy
+        (function()
+            {
+
+                if (this.openinfowindow)
+                {
+                    this.openinfowindow.close();
+                }
+                infowindow.open(map, route);
+                this.openinfowindow = infowindow;
+
+            },this
+        )
+        );
+
+    start_marker.addListener
+        (
+            'click', $.proxy
+        (function()
+            {
+
+                if (this.openinfowindow)
+                {
+                    this.openinfowindow.close();
+                }
+                infowindow.open(map, start_marker);
+                this.openinfowindow = infowindow;
+
+            },this
+        )
+        );
+
+
+    //POPULATE MARKERS ARRAY
     this.markersArray.push(start_marker);
     this.markersArray.push(end_marker);
     this.markersArray.push(route);
-
-    this.mapBounds = new google.maps.LatLngBounds();
-    this.mapBounds.extend(start_latlng);
-    this.mapBounds.extend(end_latlng);
-    map.setCenter(this.mapBounds.getCenter());
-    map.fitBounds(this.mapBounds);
 
 }
 
@@ -431,10 +517,84 @@ MapObject.prototype.plotCircle = function (lat, lng, range)
     );
     this.markersArray.push(circle);
 
+    this.mapBounds.extend(latlng);
+
 }
 
 
 
+/*********************************************************************************
+ * METHOD listResults.
+ * Generate HTML objects
+ * for each result
+ */
+MapObject.prototype.listResults = function (resultsArray)
+{
+    //SELECT MATCHLIST AND EMPTY IF POPULATED
+    var target_div = document.getElementById('matchlist');
+    target_div.innerHTML = "";
+
+    if (resultsArray.length == 0)
+    {
+        var new_div = document.createElement('div');
+        new_div.id = "no-results";
+        new_div.innerHTML = "Sorry, no results could be found for your parcel!"
+        target_div.appendChild(new_div);
+    }
+    else
+    {
+
+        //DEFINE GENERIC STRINGS
+        var title_str = "Journey #"
+        var start_dist_str = " miles from your start point.";
+        var end_dist_str = " miles from your end point.";
+
+        //LOOP THROUGH MATCHES
+        for (var i = 0; i < resultsArray.length; i++)
+        {
+
+            //CREATE THE CONTAINER DIV
+            var new_div = document.createElement('div');
+            new_div.id = resultsArray[i].id;
+
+            //CREATE THE HEADING
+            var heading = document.createElement('h3');
+            heading.innerHTML = title_str + resultsArray[i].id;
+
+            //CREATE THE LIST
+            var list = document.createElement('ul');
+
+            //CREATE THE LIST ITEMS
+            var roundedStart = Math.round(resultsArray[i].startdistance * 100) / 100;
+            var roundedEnd = Math.round(resultsArray[i].enddistance * 100) / 100;
+
+            var start = document.createElement('li');
+            start.innerHTML = roundedStart + start_dist_str;
+
+            var end = document.createElement('li');
+            end.innerHTML = roundedEnd + end_dist_str;
+
+            //USER LINKS
+            var user = document.createElement('li');
+            var user_link = document.createElement('a');
+            user_link.href = "http://quicko/users/"+resultsArray[i].owner.id;
+            user_link.text=  resultsArray[i].owner.name;
+            user.appendChild(user_link);
+
+
+
+            //JOIN IT ALL TOGETHER
+            list.appendChild(user);
+            list.appendChild(start);
+            list.appendChild(end);
+            new_div.appendChild(heading);
+            new_div.appendChild(list);
+            target_div.appendChild(new_div);
+        }
+
+    }
+
+}
 
 
 

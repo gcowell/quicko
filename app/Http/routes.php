@@ -33,3 +33,9 @@ Route::post('parcels', 'ParcelsController@store');
 Route::get('parcels/{id}', 'ParcelsController@show');
 Route::get('parcels/{id}/{range}', 'ParcelsController@matchToJourney');
 
+//User routes
+Route::get('users/dashboard', 'UserController@index');
+Route::get('users/{id}', 'UserController@show');
+
+
+

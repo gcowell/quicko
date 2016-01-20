@@ -5,6 +5,7 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use DB;
 use Auth;
+use App\User;
 
 class Journey extends Model
 {
@@ -22,7 +23,7 @@ class Journey extends Model
 
     public function owner()
     {
-        return $this->belongsTo('App\User');
+        return $this->belongsTo('App\User', 'user_id');
     }
 
 
@@ -56,9 +57,23 @@ class Journey extends Model
             ->orderBy("startdistance")
             ->get();
 
+        $matches = [];
+
+        foreach ($journeys as $journey)
+        {
+            $owner = $journey->owner;
+            $journey->owner = $owner;
+            //TODO NEED TO NOT SEND EMAILS AND PASSWORDS!!!!!!!!!!!!!!!!
+            array_push($matches, $journey);
+        }
+
         return($journeys);
 
     }
+
+
+
+
 }
 
 

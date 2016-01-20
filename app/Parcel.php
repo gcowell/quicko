@@ -22,7 +22,6 @@ class Parcel extends Model
         ];
 
 
-
     //Find owner of Parcel
     public function owner()
     {
@@ -50,7 +49,8 @@ class Parcel extends Model
                         ST_X(endpoint) AS end_lat,
                         ST_Y(endpoint) AS end_lng'
                     )
-            )->first();
+            )->where('id', '=', $id)
+            ->first();
 
 
         return $parcel_unpacked;

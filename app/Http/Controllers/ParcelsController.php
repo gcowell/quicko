@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Journey;
 use App\Parcel;
+use App\User;
 use App\Http\Requests;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -87,7 +88,6 @@ class ParcelsController extends Controller
             $parcel = $parcel->unpackPoints($parcel->id);
             $journey = new Journey();
             $matches = $journey->findMatchingJourneys($parcel, $range);
-
             $results = ['parcel' => $parcel, 'matches' => $matches];
 
             return ($results);

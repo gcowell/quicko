@@ -7,7 +7,8 @@
 <div id="map">
 </div>
 
-<div id="itemlist">
+<div id="matchlist">
+
 </div>
 
 
